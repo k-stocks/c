@@ -1,6 +1,6 @@
 'use strict';
 // Yahoo Finance chart API is accessed through the companion Cloudflare Worker.
-const PROXY_BASE='https://checklist.hundprint.workers.dev';
+const PROXY_BASE='https://pmc.mcraft-tiger-574.workers.dev';
 const $=id=>document.getElementById(id);
 const blank='—';
 const groups=[
@@ -35,7 +35,8 @@ const groups=[
   ]},
   {label:'국내 증시',items:[
     {id:'kospi200night',no:3,name:'코스피200 야간선물',source:'kredNightFutures',page:'https://kred.dev/ko/kospi-200-night-futures',unit:'futures',decimals:2},
-    {id:'kosdaq150night',no:4,name:'코스닥150 야간선물',source:'kredNightFutures',page:'https://kred.dev/ko/kosdaq-150-night-futures',unit:'futures',decimals:2}
+    {id:'kosdaq150night',no:4,name:'코스닥150 야간선물',source:'kredNightFutures',page:'https://kred.dev/ko/kosdaq-150-night-futures',unit:'futures',decimals:2},
+    {id:'ewy',no:'',name:'iShares MSCI South Korea ETF',ticker:'EWY',unit:'stock',decimals:2}
   ]}
 ];
 // SOXQ가 추종하는 PHLX Semiconductor Sector Index의 구성 종목 풀(현행 30개 종목).
@@ -296,7 +297,7 @@ function makeSummaryCell(ref){
     const targetId=ref.chartId||ref.id;
     const link=ref.url?`<a class="summary-chart-link" href="${ref.url}" target="_blank" rel="noopener noreferrer">차트</a>`:`<a class="summary-chart-link internal-chart-link" href="#chart-card-${targetId}" data-chart-target="chart-card-${targetId}">차트</a>`;
     const ticker=ref.ticker||all.find(item=>item.id===ref.id)?.ticker;
-    const displayName=`${ref.no!==''&&ref.no!==null&&ref.no!==undefined?`${ref.no}. `:''}${ref.id==='vix'?'VIX':ref.name}${ticker?` [${ticker}]`:''}`;
+    const displayName=ref.displayName||`${ref.no!==''&&ref.no!==null&&ref.no!==undefined?`${ref.no}. `:''}${ref.id==='vix'?'VIX':ref.name}${ticker?` [${ticker}]`:''}`;
     const blankOnly=!!ref.blankOnly||!!all.find(item=>item.id===ref.id)?.blankSummary;
     cell.innerHTML=`<div class="summary-titleline"><div class="summary-label">${displayName}</div>${link}</div>${blankOnly?'':`<div class="summary-price-line"><div class="summary-quote-values"><div class="summary-price">${blank}</div><div class="summary-change neutral">${blank} · ${blank}</div>${all.find(item=>item.id===ref.id)?.unit==='stock'?`<div class="summary-session-box"><div class="summary-session-item"><span class="summary-session-label">프리마켓</span><span class="summary-session-value summary-pre-price">${blank}</span><span class="summary-session-delta summary-pre-delta neutral">${blank}</span><span class="summary-session-pct summary-pre-pct neutral">${blank}</span></div><div class="summary-session-item"><span class="summary-session-label">정규장</span><span class="summary-session-value summary-regular-price">${blank}</span><span class="summary-session-delta summary-regular-delta neutral">${blank}</span><span class="summary-session-pct summary-regular-pct neutral">${blank}</span></div><div class="summary-session-item"><span class="summary-session-label">애프터마켓</span><span class="summary-session-value summary-post-price">${blank}</span><span class="summary-session-delta summary-post-delta neutral">${blank}</span><span class="summary-session-pct summary-post-pct neutral">${blank}</span></div></div>`:''}</div></div>`}`;
     cell.dataset.summaryId=ref.id;
@@ -327,6 +328,7 @@ function makeSummary(){
       {no:2,id:'sp500-futures',name:'S&P 500 선물',ticker:'ES=F'}
     ],marketIndex:true,after:true},
     {items:[{no:3,id:'kospi200night',name:'코스피200 야간선물',url:'https://kred.dev/ko/kospi-200-night-futures'},{no:4,id:'kosdaq150night',name:'코스닥150 야간선물',url:'https://kred.dev/ko/kosdaq-150-night-futures'}],after:true},
+    {items:[{no:'',id:'ewy',name:'iShares MSCI South Korea ETF',ticker:'EWY',displayName:'[+] iShares MSCI South Korea ETF [EWY]'}],single:true,after:true},
     {items:[{no:5,id:'sox',name:'필라델피아 반도체 지수',ticker:'^SOX'}],single:true,semis,after:true},
     ...m7Rows.map((items,index)=>({items,m7:true,after:index===3})),
     {activityType:'turnover'},
@@ -348,7 +350,7 @@ function makeSummary(){
     const targetId=ref.chartId||ref.id;
     const link=ref.url?`<a class="summary-chart-link" href="${ref.url}" target="_blank" rel="noopener noreferrer">차트</a>`:`<a class="summary-chart-link internal-chart-link" href="#chart-card-${targetId}" data-chart-target="chart-card-${targetId}">차트</a>`;
     const ticker=ref.ticker||all.find(item=>item.id===ref.id)?.ticker;
-    const displayName=`${ref.no!==''&&ref.no!==null&&ref.no!==undefined?`${ref.no}. `:''}${ref.id==='vix'?'VIX':ref.name}${ticker?` [${ticker}]`:''}`;
+    const displayName=ref.displayName||`${ref.no!==''&&ref.no!==null&&ref.no!==undefined?`${ref.no}. `:''}${ref.id==='vix'?'VIX':ref.name}${ticker?` [${ticker}]`:''}`;
     const blankOnly=!!ref.blankOnly||!!all.find(item=>item.id===ref.id)?.blankSummary;
     cell.innerHTML=`<div class="summary-titleline"><div class="summary-label">${displayName}</div>${link}</div>${blankOnly?'':`<div class="summary-price-line"><div class="summary-quote-values"><div class="summary-price">${blank}</div><div class="summary-change neutral">${blank} · ${blank}</div>${all.find(item=>item.id===ref.id)?.unit==='stock'?`<div class="summary-session-box"><div class="summary-session-item"><span class="summary-session-label">프리마켓</span><span class="summary-session-value summary-pre-price">${blank}</span><span class="summary-session-delta summary-pre-delta neutral">${blank}</span><span class="summary-session-pct summary-pre-pct neutral">${blank}</span></div><div class="summary-session-item"><span class="summary-session-label">정규장</span><span class="summary-session-value summary-regular-price">${blank}</span><span class="summary-session-delta summary-regular-delta neutral">${blank}</span><span class="summary-session-pct summary-regular-pct neutral">${blank}</span></div><div class="summary-session-item"><span class="summary-session-label">애프터마켓</span><span class="summary-session-value summary-post-price">${blank}</span><span class="summary-session-delta summary-post-delta neutral">${blank}</span><span class="summary-session-pct summary-post-pct neutral">${blank}</span></div></div>`:''}</div></div>`}`;
     cell.dataset.summaryId=ref.id;
@@ -430,7 +432,7 @@ function makeSummary(){
 function makeCharts(){
   const root=$('charts');root.innerHTML='';
   groups.forEach(group=>{
-    let visibleItems=group.items.filter(item=>item.source!=='kredNightFutures'&&(!item.semiconductorCandidate||item.summaryActive));
+    let visibleItems=group.items.filter(item=>item.id!=='ewy'&&item.source!=='kredNightFutures'&&(!item.semiconductorCandidate||item.summaryActive));
     const m7Set=new Set(M7_IDS);
     const byCap=(a,b)=>{const av=Number.isFinite(a.marketCap)&&a.marketCap>0?a.marketCap:null,bv=Number.isFinite(b.marketCap)&&b.marketCap>0?b.marketCap:null;if(av===null&&bv===null)return group.items.indexOf(a)-group.items.indexOf(b);if(av===null)return 1;if(bv===null)return -1;return bv-av;};
     visibleItems.sort((a,b)=>{if(m7Set.has(a.id)&&m7Set.has(b.id))return byCap(a,b);if(a.semiconductorCandidate&&b.semiconductorCandidate)return byCap(a,b);return group.items.indexOf(a)-group.items.indexOf(b);});
@@ -438,6 +440,17 @@ function makeCharts(){
     const heading=document.createElement('div');heading.className='section-heading group-heading';heading.innerHTML=`<div><span class="eyebrow">${group.label==='미국 증시'?'U.S. MARKETS':group.label==='금리·환율·원자재'?'RATES · FX · COMMODITIES':'KOREA MARKETS'}</span><h2>${group.label}</h2></div>`;root.appendChild(heading);
     let semiconductorWrap=null;
     visibleItems.forEach(item=>{
+      // EWY remains in the domestic data/summary group, but its chart is displayed above SOX.
+      if(item.id==='sox'){
+        const ewy=all.find(candidate=>candidate.id==='ewy');
+        if(ewy){
+          const ewyCard=document.createElement('article');
+          ewyCard.className='chart-card';
+          ewyCard.id=`chart-card-${ewy.id}`;
+          ewyCard.innerHTML=`<div class="chart-top"><div class="chart-title"><span class="number">+</span><h3>${ewy.name} [${ewy.ticker}]</h3></div><div class="quote-block"><div class="quote-close">${blank}</div><div class="quote-change neutral">${blank} · ${blank}</div><div class="quote-date">종가 기준</div></div></div><div class="chart-range-toolbar" data-range-for="${ewy.id}"><button type="button" data-range="1M">1M</button><button type="button" data-range="3M\" class="selected">3M</button><button type="button" data-range="6M">6M</button><button type="button" data-range="YTD">YTD</button><button type="button" data-range="1Y">1Y</button><button type="button" data-range="ALL">ALL</button></div><div id="chart-${ewy.id}" class="chart-area"><div class="chart-empty">시세 데이터를 불러오는 중…</div></div><div class="chart-foot"><span class="chart-note">${ewy.ticker}</span><span class="bar-count">전체 기간 데이터</span></div>`;
+          ewy.card=ewyCard;root.appendChild(ewyCard);
+        }
+      }
       if(item.id==='us2y'){
         // Keep the activity controls after the SOX, M7, and SK hynix chart cards.
         Object.entries(ACTIVITY_TYPES).forEach(([type,config])=>{
@@ -473,7 +486,7 @@ function makeCharts(){
       const card=document.createElement('article');
       card.className='chart-card'+(['sox','nvda-m7','us2y','vix'].includes(item.id)?' chart-divider-before':'');
       card.id=`chart-card-${item.id}`;
-      card.innerHTML=`<div class="chart-top"><div class="chart-title"><span class="number">${item.no}</span><h3>${item.name}${item.ticker?` [${item.ticker}]`:''}</h3></div><div class="quote-block"><div class="quote-close">${blank}</div><div class="quote-change neutral">${blank} · ${blank}</div><div class="quote-date">종가 기준</div></div></div><div class="chart-range-toolbar" data-range-for="${item.id}"><button type="button" data-range="1M">1M</button><button type="button" data-range="3M" class="selected">3M</button><button type="button" data-range="6M">6M</button><button type="button" data-range="YTD">YTD</button><button type="button" data-range="1Y">1Y</button><button type="button" data-range="ALL">ALL</button></div><div id="chart-${item.id}" class="chart-area"><div class="chart-empty">시세 데이터를 불러오는 중…</div></div><div class="chart-foot"><span class="chart-note">${item.ticker||''}</span><span class="bar-count">전체 기간 데이터</span></div>`;
+      card.innerHTML=`<div class="chart-top"><div class="chart-title"><span class="number">${item.id==='ewy'?'+' : item.no}</span><h3>${item.name}${item.ticker?` [${item.ticker}]`:''}</h3></div><div class="quote-block"><div class="quote-close">${blank}</div><div class="quote-change neutral">${blank} · ${blank}</div><div class="quote-date">종가 기준</div></div></div><div class="chart-range-toolbar" data-range-for="${item.id}"><button type="button" data-range="1M">1M</button><button type="button" data-range="3M" class="selected">3M</button><button type="button" data-range="6M">6M</button><button type="button" data-range="YTD">YTD</button><button type="button" data-range="1Y">1Y</button><button type="button" data-range="ALL">ALL</button></div><div id="chart-${item.id}" class="chart-area"><div class="chart-empty">시세 데이터를 불러오는 중…</div></div><div class="chart-foot"><span class="chart-note">${item.ticker||''}</span><span class="bar-count">전체 기간 데이터</span></div>`;
       if(item.semiconductorCandidate&&semiconductorWrap){semiconductorWrap.appendChild(card);}
       else root.appendChild(card);
       item.card=card;
