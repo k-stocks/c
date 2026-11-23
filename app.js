@@ -1,6 +1,6 @@
 'use strict';
 // Yahoo Finance chart API is accessed through the companion Cloudflare Worker.
-const PROXY_BASE='https://checklist.hundprint.workers.dev';
+const PROXY_BASE='https://pmc.mcraft-tiger-574.workers.dev';
 const $=id=>document.getElementById(id);
 const blank='—';
 const groups=[
@@ -782,6 +782,9 @@ async function refreshAll(){
   const marketCapsTask=refreshMarketCaps();
   const priorityItems=groups.flatMap(group=>group.items)
     .filter(item=>item.source==='kredNightFutures');
+  // EWY는 국내/미국 지수 로딩 대기열 뒤에 밀리지 않도록 별도 우선 요청으로 즉시 시작합니다.
+  const ewyItem=all.find(item=>item.id==='ewy');
+  const ewyTask=ewyItem?loadItem(ewyItem):Promise.resolve();
 
   async function loadItem(item){
     try{
@@ -819,7 +822,7 @@ async function refreshAll(){
   await Promise.all([marketCapsTask,Promise.all(priorityItems.map(loadItem)),ndxTask]);
 
   $('status').textContent='핵심 지수 조회 완료 · 나머지 차트 불러오는 중…';
-  const priorityIds=new Set(priorityItems.map(item=>item.id));
+  const priorityIds=new Set([...priorityItems.map(item=>item.id),'ewy']);
   const queue=all.filter(item=>
     !item.hidden &&
     !priorityIds.has(item.id) &&
@@ -835,6 +838,8 @@ async function refreshAll(){
     }
   }
   await Promise.all(Array.from({length:8},()=>worker()));
+  // EWY가 늦더라도 다른 차트 로딩을 막지 않으며, 전체 상태 집계 전에 완료를 확인합니다.
+  await ewyTask;
 
   updateSummary();
   $('updated').textContent=`${new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})} 갱신`;
